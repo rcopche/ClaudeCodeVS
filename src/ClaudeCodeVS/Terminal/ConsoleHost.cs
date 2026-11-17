@@ -166,7 +166,7 @@ namespace ClaudeCodeVS.Terminal
 
                 // After 3 seconds also accept any new visible console window, in case
                 // the title was replaced before it could be matched.
-                consoleHwnd = FindConsoleWindow(token, existing, i >= 30);
+                consoleHwnd = FindConsoleWindow(token, existing, job, i >= 30);
                 if (consoleHwnd != IntPtr.Zero)
                 {
                     break;
@@ -196,6 +196,13 @@ namespace ClaudeCodeVS.Terminal
             style |= NativeMethods.WS_CHILD;
             NativeMethods.SetWindowLongPtr(consoleHwnd, NativeMethods.GWL_STYLE, new IntPtr(style));
             NativeMethods.SetParent(consoleHwnd, _hostHwnd);
+            if (NativeMethods.GetParent(consoleHwnd) != _hostHwnd)
+            {
+                // Report it instead of leaving a console floating outside Visual Studio.
+                int error = Marshal.GetLastWin32Error();
+                Stop();
+                throw new InvalidOperationException("Could not attach the console to the tool window (error " + error + ").");
+            }
 
             _consoleHwnd = consoleHwnd;
             ResizeConsole();
@@ -343,7 +350,7 @@ namespace ClaudeCodeVS.Terminal
             var commandLine = new StringBuilder("\"" + conhost + "\" " + arguments);
             NativeMethods.PROCESS_INFORMATION info;
             if (!NativeMethods.CreateProcess(
-                    conhost, commandLine, IntPtr.Zero, IntPtr.Zero, false, 0,
+                    conhost, commandLine, IntPtr.Zero, IntPtr.Zero, false, NativeMethods.CREATE_SUSPENDED,
                     IntPtr.Zero, workingDirectory, ref startupInfo, out info))
             {
                 throw new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error());
@@ -351,7 +358,9 @@ namespace ClaudeCodeVS.Terminal
 
             try
             {
+                // Started suspended so that every process it creates is already in the job.
                 job.Assign(info.hProcess);
+                NativeMethods.ResumeThread(info.hThread);
 
                 // The open process handle keeps the id from being reused meanwhile.
                 return Process.GetProcessById(info.dwProcessId);
@@ -383,8 +392,15 @@ namespace ClaudeCodeVS.Terminal
             return windows;
         }
 
-        private static IntPtr FindConsoleWindow(string token, HashSet<IntPtr> existing, bool acceptAnyNew)
+        /// <summary>
+        /// Finds the window of the console that was just started. The reliable test is the
+        /// owning process: it must be one of the processes in this session's job. The title
+        /// token and "any new console window" are fallbacks.
+        /// </summary>
+        private static IntPtr FindConsoleWindow(string token, HashSet<IntPtr> existing, KillOnCloseJob job, bool acceptAnyNew)
         {
+            HashSet<int> sessionProcesses = job.GetProcessIds();
+            IntPtr byTitle = IntPtr.Zero;
             IntPtr fallback = IntPtr.Zero;
             var title = new StringBuilder(512);
             foreach (IntPtr hwnd in GetConsoleWindows())
@@ -394,11 +410,19 @@ namespace ClaudeCodeVS.Terminal
                     continue;
                 }
 
-                title.Length = 0;
-                NativeMethods.GetWindowText(hwnd, title, title.Capacity);
-                if (title.ToString().IndexOf(token, StringComparison.OrdinalIgnoreCase) >= 0)
+                uint processId;
+                NativeMethods.GetWindowThreadProcessId(hwnd, out processId);
+                if (sessionProcesses.Contains((int)processId))
                 {
                     return hwnd;
+                }
+
+                title.Length = 0;
+                NativeMethods.GetWindowText(hwnd, title, title.Capacity);
+                if (byTitle == IntPtr.Zero &&
+                    title.ToString().IndexOf(token, StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    byTitle = hwnd;
                 }
 
                 if (acceptAnyNew && fallback == IntPtr.Zero && NativeMethods.IsWindowVisible(hwnd))
@@ -407,7 +431,7 @@ namespace ClaudeCodeVS.Terminal
                 }
             }
 
-            return fallback;
+            return byTitle != IntPtr.Zero ? byTitle : fallback;
         }
 
         private void ResizeConsole()

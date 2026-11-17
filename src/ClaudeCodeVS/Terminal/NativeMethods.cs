@@ -32,6 +32,8 @@ namespace ClaudeCodeVS.Terminal
         public const uint SWP_FRAMECHANGED = 0x0020;
 
         public const int JobObjectExtendedLimitInformation = 9;
+        public const int JobObjectBasicProcessIdList = 3;
+        public const uint CREATE_SUSPENDED = 0x00000004;
         public const uint JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE = 0x2000;
 
         [StructLayout(LayoutKind.Sequential)]
@@ -188,5 +190,19 @@ namespace ClaudeCodeVS.Terminal
         [DllImport("kernel32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
         public static extern bool CloseHandle(IntPtr handle);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool QueryInformationJobObject(
+            IntPtr job, int infoClass, IntPtr info, uint infoLength, IntPtr returnLength);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern uint ResumeThread(IntPtr thread);
+
+        [DllImport("user32.dll")]
+        public static extern uint GetWindowThreadProcessId(IntPtr hwnd, out uint processId);
+
+        [DllImport("user32.dll")]
+        public static extern IntPtr GetParent(IntPtr hwnd);
     }
 }

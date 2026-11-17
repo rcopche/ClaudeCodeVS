@@ -38,13 +38,20 @@ namespace ClaudeCodeVS.ToolWindow
         private readonly Button _newWindow;
         private readonly Border _notice;
         private readonly TextBlock _noticeText = new TextBlock();
+        private readonly Button _rename;
+        private readonly Func<string> _getCaption;
+        private readonly Action<string> _setCaption;
+        private Popup _renamePopup;
         private Popup _historyPopup;
         private bool _started;
         private bool _disposed;
         private string _pendingText;
 
-        public ClaudeTerminalControl()
+        public ClaudeTerminalControl(Func<string> getCaption, Action<string> setCaption)
         {
+            _getCaption = getCaption;
+            _setCaption = setCaption;
+
             _newChat = ToolbarUi.CreateToolbarButton(
                 ToolbarUi.GlyphNewChat, "New chat",
                 "Start a new Claude Code chat in the current solution folder");
@@ -65,6 +72,10 @@ namespace ClaudeCodeVS.ToolWindow
                 "Open another Claude Code window with a chat of its own");
             _newWindow.Click += OnNewWindowClick;
 
+            _rename = ToolbarUi.CreateToolbarButton(
+                ToolbarUi.GlyphRename, null, "Rename this tab");
+            _rename.Click += OnRenameClick;
+
             _status.Margin = new Thickness(10, 0, 6, 0);
             _status.VerticalAlignment = VerticalAlignment.Center;
             _status.TextTrimming = TextTrimming.CharacterEllipsis;
@@ -83,10 +94,12 @@ namespace ClaudeCodeVS.ToolWindow
             DockPanel.SetDock(_history, Dock.Left);
             DockPanel.SetDock(_fixErrors, Dock.Left);
             DockPanel.SetDock(_newWindow, Dock.Right);
+            DockPanel.SetDock(_rename, Dock.Right);
             barContent.Children.Add(_newChat);
             barContent.Children.Add(_history);
             barContent.Children.Add(_fixErrors);
             barContent.Children.Add(_newWindow);
+            barContent.Children.Add(_rename);
             barContent.Children.Add(_status);
 
             var bar = new Border
@@ -454,6 +467,94 @@ namespace ClaudeCodeVS.ToolWindow
                 _noticeText.ToolTip = "Chat folder: " + WorkingDirectory + "\nSolution folder: " + directory;
                 _notice.Visibility = Visibility.Visible;
             }));
+        }
+
+        /// <summary>Shows a small box under the rename button to type a new tab name.</summary>
+        private void OnRenameClick(object sender, RoutedEventArgs e)
+        {
+            CloseRename();
+
+            var box = new TextBox
+            {
+                Text = _getCaption != null ? (_getCaption() ?? string.Empty) : string.Empty,
+                Width = 220,
+                Padding = new Thickness(4, 3, 4, 3),
+                BorderThickness = new Thickness(1)
+            };
+            box.SetResourceReference(Control.BackgroundProperty, VsBrushes.ToolWindowBackgroundKey);
+            box.SetResourceReference(Control.ForegroundProperty, VsBrushes.ToolWindowTextKey);
+            box.SetResourceReference(Control.BorderBrushProperty, VsBrushes.ToolWindowBorderKey);
+            box.SetResourceReference(TextBoxBase.CaretBrushProperty, VsBrushes.ToolWindowTextKey);
+
+            box.KeyDown += (s, args) =>
+            {
+                if (args.Key == System.Windows.Input.Key.Enter)
+                {
+                    string name = box.Text.Trim();
+                    if (name.Length > 0 && _setCaption != null)
+                    {
+                        _setCaption(name);
+                    }
+
+                    args.Handled = true;
+                    CloseRename();
+                }
+                else if (args.Key == System.Windows.Input.Key.Escape)
+                {
+                    args.Handled = true;
+                    CloseRename();
+                }
+            };
+
+            var label = new TextBlock
+            {
+                Text = "Tab name (Enter to apply, Esc to cancel)",
+                FontSize = 11,
+                Opacity = 0.65,
+                Margin = new Thickness(1, 0, 0, 4)
+            };
+
+            var layout = new StackPanel();
+            layout.Children.Add(label);
+            layout.Children.Add(box);
+
+            var frame = new Border
+            {
+                Child = layout,
+                Padding = new Thickness(8),
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(4)
+            };
+            frame.SetResourceReference(Border.BackgroundProperty, VsBrushes.ToolWindowBackgroundKey);
+            frame.SetResourceReference(Border.BorderBrushProperty, VsBrushes.ToolWindowBorderKey);
+            frame.SetResourceReference(TextElement.ForegroundProperty, VsBrushes.ToolWindowTextKey);
+
+            _renamePopup = new Popup
+            {
+                Child = frame,
+                PlacementTarget = _rename,
+                Placement = PlacementMode.Bottom,
+                VerticalOffset = 2,
+                StaysOpen = false,
+                AllowsTransparency = true
+            };
+            _renamePopup.IsOpen = true;
+
+            // Focus after the popup is on screen, with the current name selected.
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                box.Focus();
+                box.SelectAll();
+            }), System.Windows.Threading.DispatcherPriority.Input);
+        }
+
+        private void CloseRename()
+        {
+            if (_renamePopup != null)
+            {
+                _renamePopup.IsOpen = false;
+                _renamePopup = null;
+            }
         }
 
         private void OnNewWindowClick(object sender, RoutedEventArgs e)
@@ -997,6 +1098,7 @@ namespace ClaudeCodeVS.ToolWindow
             _disposed = true;
             Microsoft.VisualStudio.Shell.Events.SolutionEvents.OnAfterOpenSolution -= OnSolutionOpened;
             CloseHistory();
+            CloseRename();
             _host.SessionExited -= OnSessionExited;
             _host.Stop();
             _host.Dispose();

@@ -12,7 +12,8 @@ namespace ClaudeCodeVS.ToolWindow
         public ClaudeToolWindow() : base(null)
         {
             Caption = "Claude Code";
-            _control = new ClaudeTerminalControl();
+            // The control can read and change the tab caption (the rename button).
+            _control = new ClaudeTerminalControl(() => Caption, name => Caption = name);
             Content = _control;
         }
 

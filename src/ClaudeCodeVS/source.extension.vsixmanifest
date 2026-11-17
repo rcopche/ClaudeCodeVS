@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
   <Metadata>
-    <Identity Id="ClaudeCodeVS.6f0c1b52-3d8e-4a47-9b1f-2c7a5e94d300" Version="0.1.0" Language="en-US" Publisher="Rubens" />
+    <Identity Id="ClaudeCodeVS.6f0c1b52-3d8e-4a47-9b1f-2c7a5e94d300" Version="0.1.0" Language="en-US" Publisher="Rubens Copche" />
     <DisplayName>Claude Code Tool Window (Unofficial)</DisplayName>
     <Description xml:space="preserve">Runs the Claude Code CLI in a dockable tool window, started in the folder of the open solution. Community project, not affiliated with or endorsed by Anthropic.</Description>
     <License>LICENSE.txt</License>
@@ -19,12 +19,12 @@
     </InstallationTarget>
   </Installation>
   <Dependencies>
-    <Dependency Id="Microsoft.Framework.NDP" DisplayName="Microsoft .NET Framework" d:Source="Manual" Version="[4.7.2,)" />
+    <Dependency Id="Microsoft.Framework.NDP" DisplayName="Microsoft .NET Framework" Version="[4.7.2,)" d:Source="Manual" />
   </Dependencies>
   <Prerequisites>
-    <Prerequisite Id="Microsoft.VisualStudio.Component.CoreEditor" Version="[17.0,19.0)" DisplayName="Visual Studio core editor" />
+    <Prerequisite Id="Microsoft.VisualStudio.Component.CoreEditor" DisplayName="Visual Studio core editor" Version="[17.0,19.0)" />
   </Prerequisites>
   <Assets>
-    <Asset Type="Microsoft.VisualStudio.VsPackage" d:Source="Project" d:ProjectName="%CurrentProject%" Path="|%CurrentProject%;PkgdefProjectOutputGroup|" />
+    <Asset Type="Microsoft.VisualStudio.VsPackage" Path="|%CurrentProject%;PkgdefProjectOutputGroup|" d:Source="Project" d:ProjectName="%CurrentProject%" />
   </Assets>
 </PackageManifest>

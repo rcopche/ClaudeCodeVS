@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 
@@ -52,6 +53,39 @@ namespace ClaudeCodeVS.Terminal
             {
                 NativeMethods.AssignProcessToJobObject(_handle, processHandle);
             }
+        }
+
+        /// <summary>Ids of the processes currently in the job (the console host and everything it started).</summary>
+        public HashSet<int> GetProcessIds()
+        {
+            var ids = new HashSet<int>();
+            if (_handle == IntPtr.Zero)
+            {
+                return ids;
+            }
+
+            // JOBOBJECT_BASIC_PROCESS_ID_LIST: two DWORDs, then one pointer-sized id per process.
+            const int MaxProcesses = 256;
+            int length = 8 + IntPtr.Size * MaxProcesses;
+            IntPtr buffer = Marshal.AllocHGlobal(length);
+            try
+            {
+                if (NativeMethods.QueryInformationJobObject(
+                        _handle, NativeMethods.JobObjectBasicProcessIdList, buffer, (uint)length, IntPtr.Zero))
+                {
+                    int count = Math.Min(Marshal.ReadInt32(buffer, 4), MaxProcesses);
+                    for (int i = 0; i < count; i++)
+                    {
+                        ids.Add((int)Marshal.ReadIntPtr(buffer, 8 + IntPtr.Size * i).ToInt64());
+                    }
+                }
+            }
+            finally
+            {
+                Marshal.FreeHGlobal(buffer);
+            }
+
+            return ids;
         }
 
         public void Dispose()
