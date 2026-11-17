@@ -6,7 +6,9 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Input;
 using System.Windows.Interop;
+using System.Windows.Threading;
 using Microsoft.Win32;
 
 namespace ClaudeCodeVS.Terminal
@@ -86,8 +88,65 @@ namespace ClaudeCodeVS.Terminal
             {
                 ResizeConsole();
             }
+            else if (msg == NativeMethods.WM_SETFOCUS)
+            {
+                // WPF focused the host window; the keyboard belongs to the console inside it.
+                FocusConsole();
+            }
+            else if (msg == NativeMethods.WM_MOUSEACTIVATE)
+            {
+                FocusSoon();
+            }
+            else if (msg == NativeMethods.WM_PARENTNOTIFY)
+            {
+                // The console reports mouse clicks to its parent. As a child window it does
+                // not take the keyboard focus on a click by itself, so it is given here.
+                int mouseEvent = (int)(wParam.ToInt64() & 0xFFFF);
+                if (mouseEvent == NativeMethods.WM_LBUTTONDOWN ||
+                    mouseEvent == NativeMethods.WM_RBUTTONDOWN ||
+                    mouseEvent == NativeMethods.WM_MBUTTONDOWN)
+                {
+                    FocusSoon();
+                }
+            }
 
             return base.WndProc(hwnd, msg, wParam, lParam, ref handled);
+        }
+
+        /// <summary>Keyboard navigation into the host (Tab, tool window activation) goes to the console.</summary>
+        protected override bool TabIntoCore(TraversalRequest request)
+        {
+            FocusConsole();
+            return true;
+        }
+
+        /// <summary>Gives the keyboard focus to the embedded console right now.</summary>
+        public void FocusConsole()
+        {
+            IntPtr console = _consoleHwnd;
+            if (console != IntPtr.Zero && NativeMethods.IsWindow(console))
+            {
+                NativeMethods.SetFocus(console);
+            }
+        }
+
+        /// <summary>
+        /// Gives the keyboard focus to the console once the current input message has been
+        /// handled, and makes Visual Studio treat this tool window as the active one.
+        /// </summary>
+        public void FocusSoon()
+        {
+            Dispatcher.BeginInvoke(
+                new Action(() =>
+                {
+                    if (!IsKeyboardFocusWithin)
+                    {
+                        Focus();
+                    }
+
+                    FocusConsole();
+                }),
+                DispatcherPriority.Input);
         }
 
         protected override void OnWindowPositionChanged(Rect rcBoundingBox)
@@ -202,6 +261,14 @@ namespace ClaudeCodeVS.Terminal
                 int error = Marshal.GetLastWin32Error();
                 Stop();
                 throw new InvalidOperationException("Could not attach the console to the tool window (error " + error + ").");
+            }
+
+            // Make sure the console tells its parent about mouse clicks (see WndProc).
+            long exStyle = NativeMethods.GetWindowLongPtr(consoleHwnd, NativeMethods.GWL_EXSTYLE).ToInt64();
+            if ((exStyle & NativeMethods.WS_EX_NOPARENTNOTIFY) != 0)
+            {
+                NativeMethods.SetWindowLongPtr(
+                    consoleHwnd, NativeMethods.GWL_EXSTYLE, new IntPtr(exStyle & ~NativeMethods.WS_EX_NOPARENTNOTIFY));
             }
 
             _consoleHwnd = consoleHwnd;

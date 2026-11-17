@@ -13,9 +13,9 @@ namespace ClaudeCodeVS
 {
     internal static class PackageGuids
     {
-        public const string PackageString = "6f0c1b52-3d8e-4a47-9b1f-2c7a5e94d301";
-        public const string CommandSetString = "6f0c1b52-3d8e-4a47-9b1f-2c7a5e94d302";
-        public const string ToolWindowString = "6f0c1b52-3d8e-4a47-9b1f-2c7a5e94d303";
+        public const string PackageString = "349a4064-a248-494f-a194-04c70b435b01";
+        public const string CommandSetString = "349a4064-a248-494f-a194-04c70b435b02";
+        public const string ToolWindowString = "349a4064-a248-494f-a194-04c70b435b03";
 
         public static readonly Guid CommandSet = new Guid(CommandSetString);
     }

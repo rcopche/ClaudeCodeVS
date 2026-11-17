@@ -152,6 +152,9 @@ namespace ClaudeCodeVS.ToolWindow
             {
                 _pendingText = (_pendingText ?? string.Empty) + text;
             }
+
+            // The text was typed for the user to continue or confirm it.
+            _host.FocusSoon();
         }
 
         private void OnLoaded(object sender, RoutedEventArgs e)
@@ -374,6 +377,12 @@ namespace ClaudeCodeVS.ToolWindow
                         string name = Path.GetFileName(directory.TrimEnd('\\'));
                         SetStatus(string.IsNullOrEmpty(name) ? directory : name, directory);
                         WorkingDirectory = directory;
+
+                        // Started from this window (New chat, History): ready to type.
+                        if (IsKeyboardFocusWithin)
+                        {
+                            _host.FocusSoon();
+                        }
 
                         // Text queued while the console was starting stays in the console
                         // input buffer until the CLI is ready to read it.
@@ -964,6 +973,27 @@ namespace ClaudeCodeVS.ToolWindow
                     .Where(a => a != "--continue" && a != "-c")
                     .ToArray();
                 arguments = ("--resume " + resumeSessionId + " " + string.Join(" ", kept)).Trim();
+            }
+
+            // Usage line at the bottom of the console, unless the user configured their own
+            // or already passes --settings.
+            bool showStatusLine = true;
+            if (package != null)
+            {
+                var statusOptions = package.GetDialogPage(typeof(GeneralOptions)) as GeneralOptions;
+                if (statusOptions != null)
+                {
+                    showStatusLine = statusOptions.ShowStatusLine;
+                }
+            }
+
+            if (showStatusLine && arguments.IndexOf("--settings", StringComparison.OrdinalIgnoreCase) < 0)
+            {
+                string settingsFile = StatusLine.EnsureSettingsFile();
+                if (settingsFile != null)
+                {
+                    arguments = (arguments + " --settings \"" + settingsFile + "\"").Trim();
+                }
             }
 
             return arguments.Length == 0 ? command : command + " " + arguments;

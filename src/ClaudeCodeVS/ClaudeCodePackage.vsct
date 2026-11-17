@@ -44,13 +44,13 @@
   </KeyBindings>
 
   <Symbols>
-    <GuidSymbol name="guidClaudeCodePackage" value="{6f0c1b52-3d8e-4a47-9b1f-2c7a5e94d301}"/>
-    <GuidSymbol name="guidClaudeCodeCmdSet" value="{6f0c1b52-3d8e-4a47-9b1f-2c7a5e94d302}">
+    <GuidSymbol name="guidClaudeCodePackage" value="{349a4064-a248-494f-a194-04c70b435b01}"/>
+    <GuidSymbol name="guidClaudeCodeCmdSet" value="{349a4064-a248-494f-a194-04c70b435b02}">
       <IDSymbol name="grpEditorContext" value="0x1020"/>
       <IDSymbol name="cmdidOpenClaudeWindow" value="0x0100"/>
       <IDSymbol name="cmdidInsertFileReference" value="0x0101"/>
     </GuidSymbol>
-    <GuidSymbol name="guidClaudeImages" value="{6f0c1b52-3d8e-4a47-9b1f-2c7a5e94d304}">
+    <GuidSymbol name="guidClaudeImages" value="{349a4064-a248-494f-a194-04c70b435b04}">
       <IDSymbol name="bmpClaude" value="1"/>
     </GuidSymbol>
   </Symbols>

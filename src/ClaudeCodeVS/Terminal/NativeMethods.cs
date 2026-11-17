@@ -21,6 +21,18 @@ namespace ClaudeCodeVS.Terminal
         public const int SW_SHOW = 5;
 
         public const int WM_SIZE = 0x0005;
+        public const int WM_SETFOCUS = 0x0007;
+        public const int WM_MOUSEACTIVATE = 0x0021;
+        public const int WM_LBUTTONDOWN = 0x0201;
+        public const int WM_RBUTTONDOWN = 0x0204;
+        public const int WM_MBUTTONDOWN = 0x0207;
+        public const int WM_PARENTNOTIFY = 0x0210;
+
+        public const int GWL_EXSTYLE = -20;
+        public const long WS_EX_NOPARENTNOTIFY = 0x00000004L;
+
+        [DllImport("user32.dll", SetLastError = true)]
+        public static extern IntPtr SetFocus(IntPtr hwnd);
         public const int WM_CHAR = 0x0102;
 
         [DllImport("user32.dll", CharSet = CharSet.Unicode, EntryPoint = "PostMessageW", SetLastError = true)]

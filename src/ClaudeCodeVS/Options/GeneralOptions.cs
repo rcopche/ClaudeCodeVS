@@ -11,6 +11,7 @@ namespace ClaudeCodeVS.Options
         private string _consoleFont = "Cascadia Mono";
         private int _consoleFontSize = 16;
         private bool _matchTheme = true;
+        private bool _showStatusLine = true;
 
         [Category("Claude Code")]
         [DisplayName("Command")]
@@ -60,6 +61,16 @@ namespace ClaudeCodeVS.Options
         {
             get { return _matchTheme; }
             set { _matchTheme = value; }
+        }
+
+        [Category("Claude Code")]
+        [DisplayName("Show usage status line")]
+        [Description("Show a line at the bottom of the console with the context window usage and, when the account reports them, the 5-hour and 7-day plan limits. Not applied when you already have a statusLine in your Claude Code settings. Applied on the next New chat.")]
+        [DefaultValue(true)]
+        public bool ShowStatusLine
+        {
+            get { return _showStatusLine; }
+            set { _showStatusLine = value; }
         }
     }
 }
