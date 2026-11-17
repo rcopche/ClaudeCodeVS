@@ -1,0 +1,7 @@
+root = true
+
+# Source files are saved as UTF-8 with BOM, the Visual Studio default for C#.
+[*.cs]
+charset = utf-8-bom
+indent_style = space
+indent_size = 4

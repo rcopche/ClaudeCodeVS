@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CommandTable xmlns="http://schemas.microsoft.com/VisualStudio/2005-10-18/CommandTable" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+  <Extern href="stdidcmd.h"/>
+  <Extern href="vsshlids.h"/>
+
+  <Commands package="guidClaudeCodePackage">
+    <Groups>
+      <!-- A group of our own inside the code editor context menu. -->
+      <Group guid="guidClaudeCodeCmdSet" id="grpEditorContext" priority="0x0600">
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_CODEWIN"/>
+      </Group>
+    </Groups>
+
+    <Buttons>
+      <!-- View > Other Windows > Claude Code -->
+      <Button guid="guidClaudeCodeCmdSet" id="cmdidOpenClaudeWindow" priority="0x0100" type="Button">
+        <Parent guid="guidSHLMainMenu" id="IDG_VS_WNDO_OTRWNDWS1"/>
+        <Icon guid="guidClaudeImages" id="bmpClaude"/>
+        <Strings>
+          <ButtonText>Claude Code</ButtonText>
+        </Strings>
+      </Button>
+
+      <!-- Editor right-click > Claude Code: Reference This File/Selection -->
+      <Button guid="guidClaudeCodeCmdSet" id="cmdidInsertFileReference" priority="0x0100" type="Button">
+        <Parent guid="guidClaudeCodeCmdSet" id="grpEditorContext"/>
+        <Icon guid="guidClaudeImages" id="bmpClaude"/>
+        <Strings>
+          <ButtonText>Claude Code: Reference This File/Selection</ButtonText>
+        </Strings>
+      </Button>
+    </Buttons>
+
+    <Bitmaps>
+      <!-- 16x16 image shown next to the menu items; generated from Resources\Icon.png. -->
+      <Bitmap guid="guidClaudeImages" href="Resources\Icon16.png" usedList="bmpClaude"/>
+    </Bitmaps>
+  </Commands>
+
+  <KeyBindings>
+    <!-- Ctrl+Alt+K (Alt+K alone is taken by GitHub Copilot in Visual Studio). Change it in Tools > Options > Environment > Keyboard. -->
+    <KeyBinding guid="guidClaudeCodeCmdSet" id="cmdidInsertFileReference" editor="guidVSStd97" key1="K" mod1="Control Alt"/>
+  </KeyBindings>
+
+  <Symbols>
+    <GuidSymbol name="guidClaudeCodePackage" value="{6f0c1b52-3d8e-4a47-9b1f-2c7a5e94d301}"/>
+    <GuidSymbol name="guidClaudeCodeCmdSet" value="{6f0c1b52-3d8e-4a47-9b1f-2c7a5e94d302}">
+      <IDSymbol name="grpEditorContext" value="0x1020"/>
+      <IDSymbol name="cmdidOpenClaudeWindow" value="0x0100"/>
+      <IDSymbol name="cmdidInsertFileReference" value="0x0101"/>
+    </GuidSymbol>
+    <GuidSymbol name="guidClaudeImages" value="{6f0c1b52-3d8e-4a47-9b1f-2c7a5e94d304}">
+      <IDSymbol name="bmpClaude" value="1"/>
+    </GuidSymbol>
+  </Symbols>
+</CommandTable>
