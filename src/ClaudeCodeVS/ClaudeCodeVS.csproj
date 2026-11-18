@@ -50,9 +50,13 @@
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Terminal\ConPtySession.cs" />
     <Compile Include="Terminal\ConsoleHost.cs" />
+    <Compile Include="Terminal\ITerminalHost.cs" />
     <Compile Include="Terminal\KillOnCloseJob.cs" />
+    <Compile Include="Terminal\ModernTerminal.cs" />
     <Compile Include="Terminal\NativeMethods.cs" />
+    <Compile Include="Terminal\TerminalFactory.cs" />
     <Compile Include="ToolWindow\ClaudeTerminalControl.cs" />
     <Compile Include="ToolWindow\ClaudeToolWindow.cs" />
     <Compile Include="ToolWindow\SessionHistory.cs" />
@@ -76,6 +80,13 @@
     </VSCTCompile>
   </ItemGroup>
   <ItemGroup>
+    <!-- The terminal control that ships with Visual Studio. Referenced from the install
+         folder and not packaged: at run time Visual Studio supplies its own copy. -->
+    <Reference Include="Microsoft.Terminal.Wpf">
+      <HintPath>$(DevEnvDir)CommonExtensions\Microsoft\Terminal\Terminal.Wpf\Microsoft.Terminal.Wpf.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
     <Reference Include="System" />

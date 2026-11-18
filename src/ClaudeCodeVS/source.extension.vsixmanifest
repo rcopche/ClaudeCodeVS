@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
   <Metadata>
-    <Identity Id="ClaudeCodeVS.39c24eae-6794-41eb-a8f2-4006b99627c1" Version="0.1.3" Language="en-US" Publisher="RUBENS COPCHE" />
+    <Identity Id="ClaudeCodeVS.39c24eae-6794-41eb-a8f2-4006b99627c1" Version="0.1.5" Language="en-US" Publisher="RUBENS COPCHE" />
     <DisplayName>Claude Code Tool Window (Unofficial)</DisplayName>
     <Description xml:space="preserve">Runs the Claude Code CLI in a dockable tool window, started in the folder of the open solution. Community project, not affiliated with or endorsed by Anthropic.</Description>
     <License>LICENSE.txt</License>

@@ -32,7 +32,7 @@ namespace ClaudeCodeVS.Terminal
     /// Hosts a real Windows console (conhost.exe) inside a WPF element by re-parenting
     /// the console window into a child HWND owned by Visual Studio.
     /// </summary>
-    internal sealed class ConsoleHost : HwndHost
+    internal sealed class ConsoleHost : HwndHost, ITerminalHost
     {
         // Initial title of the console. conhost loads its settings (font, code page)
         // from HKCU\Console\<initial title>, so a title of our own gives this console
@@ -47,6 +47,23 @@ namespace ClaudeCodeVS.Terminal
 
         /// <summary>Raised (on a thread-pool thread) when the console process exits on its own.</summary>
         public event EventHandler SessionExited;
+
+        /// <summary>The classic console gives no way to observe the program's output.</summary>
+        public bool IsBusy
+        {
+            get { return false; }
+        }
+
+        public FrameworkElement View
+        {
+            get { return this; }
+        }
+
+        /// <summary>The console is a window of another process; its keys never pass through Visual Studio.</summary>
+        public bool PreProcessKeyMessage(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam)
+        {
+            return false;
+        }
 
         public bool IsRunning
         {

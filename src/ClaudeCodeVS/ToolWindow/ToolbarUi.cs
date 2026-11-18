@@ -21,6 +21,7 @@ namespace ClaudeCodeVS.ToolWindow
         public const string GlyphNewWindow = "\uE8A7";
         public const string GlyphClose = "\uE711";
         public const string GlyphRename = "\uE8AC";
+        public const string GlyphStop = "\uE71A";
 
         private static readonly FontFamily IconFont = new FontFamily("Segoe Fluent Icons, Segoe MDL2 Assets");
 

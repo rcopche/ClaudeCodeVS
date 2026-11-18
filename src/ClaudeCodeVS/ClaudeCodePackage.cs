@@ -80,7 +80,7 @@ namespace ClaudeCodeVS
                     return;
                 }
 
-                window.Caption = "Claude Code " + (id + 1);
+                window.Caption = "Claude Code " + (id + 1) + ClaudeToolWindow.VersionSuffix;
                 ErrorHandler.ThrowOnFailure(((IVsWindowFrame)window.Frame).Show());
                 return;
             }

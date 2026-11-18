@@ -12,6 +12,7 @@ namespace ClaudeCodeVS.Options
         private int _consoleFontSize = 16;
         private bool _matchTheme = true;
         private bool _showStatusLine = true;
+        private bool _useClassicConsole;
 
         [Category("Claude Code")]
         [DisplayName("Command")]
@@ -71,6 +72,16 @@ namespace ClaudeCodeVS.Options
         {
             get { return _showStatusLine; }
             set { _showStatusLine = value; }
+        }
+
+        [Category("Console")]
+        [DisplayName("Use classic console")]
+        [Description("Use the classic Windows console instead of the modern terminal. Try this if the terminal does not start or misbehaves. Applied to Claude Code windows opened afterwards.")]
+        [DefaultValue(false)]
+        public bool UseClassicConsole
+        {
+            get { return _useClassicConsole; }
+            set { _useClassicConsole = value; }
         }
     }
 }

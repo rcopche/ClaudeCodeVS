@@ -29,7 +29,7 @@ namespace ClaudeCodeVS.ToolWindow
         // Official Windows installer of the Claude Code CLI (PowerShell).
         private const string InstallCommand = "irm https://claude.ai/install.ps1 | iex";
 
-        private readonly ConsoleHost _host = new ConsoleHost();
+        private readonly ITerminalHost _host = TerminalFactory.Create();
         private readonly TextBlock _status = new TextBlock();
         private readonly Button _newChat;
         private readonly Button _history;
@@ -39,6 +39,8 @@ namespace ClaudeCodeVS.ToolWindow
         private readonly Border _notice;
         private readonly TextBlock _noticeText = new TextBlock();
         private readonly Button _rename;
+        private readonly Button _stop;
+        private readonly System.Windows.Threading.DispatcherTimer _busyTimer;
         private readonly Func<string> _getCaption;
         private readonly Action<string> _setCaption;
         private Popup _renamePopup;
@@ -67,6 +69,13 @@ namespace ClaudeCodeVS.ToolWindow
                 "Type the errors from the Error List into the chat so Claude can fix them");
             _fixErrors.Click += OnFixErrorsClick;
 
+            _stop = ToolbarUi.CreateToolbarButton(
+                ToolbarUi.GlyphStop, "Stop",
+                "Interrupt what Claude is doing (same as pressing Esc in the terminal)");
+            _stop.Click += OnStopClick;
+            _stop.IsEnabled = false;
+            _stop.Opacity = 0.45;
+
             _newWindow = ToolbarUi.CreateToolbarButton(
                 ToolbarUi.GlyphNewWindow, null,
                 "Open another Claude Code window with a chat of its own");
@@ -93,11 +102,13 @@ namespace ClaudeCodeVS.ToolWindow
             DockPanel.SetDock(_newChat, Dock.Left);
             DockPanel.SetDock(_history, Dock.Left);
             DockPanel.SetDock(_fixErrors, Dock.Left);
+            DockPanel.SetDock(_stop, Dock.Left);
             DockPanel.SetDock(_newWindow, Dock.Right);
             DockPanel.SetDock(_rename, Dock.Right);
             barContent.Children.Add(_newChat);
             barContent.Children.Add(_history);
             barContent.Children.Add(_fixErrors);
+            barContent.Children.Add(_stop);
             barContent.Children.Add(_newWindow);
             barContent.Children.Add(_rename);
             barContent.Children.Add(_status);
@@ -116,7 +127,7 @@ namespace ClaudeCodeVS.ToolWindow
             // The console and the first-run panel share the same area; only one is visible.
             _installPanel = CreateInstallPanel();
             var content = new Grid();
-            content.Children.Add(_host);
+            content.Children.Add(_host.View);
             content.Children.Add(_installPanel);
 
             _notice = CreateNotice();
@@ -131,6 +142,15 @@ namespace ClaudeCodeVS.ToolWindow
 
             _host.SessionExited += OnSessionExited;
             Loaded += OnLoaded;
+
+            // Keeps the Stop button in step with the session: usable while a chat is
+            // running, highlighted while Claude appears to be working.
+            _busyTimer = new System.Windows.Threading.DispatcherTimer
+            {
+                Interval = TimeSpan.FromMilliseconds(400)
+            };
+            _busyTimer.Tick += OnBusyTimerTick;
+            _busyTimer.Start();
             Microsoft.VisualStudio.Shell.Events.SolutionEvents.OnAfterOpenSolution += OnSolutionOpened;
         }
 
@@ -155,6 +175,12 @@ namespace ClaudeCodeVS.ToolWindow
 
             // The text was typed for the user to continue or confirm it.
             _host.FocusSoon();
+        }
+
+        /// <summary>Lets the terminal take a keyboard message before Visual Studio's shortcuts.</summary>
+        public bool PreProcessKeyMessage(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam)
+        {
+            return !_disposed && _host.PreProcessKeyMessage(hwnd, msg, wParam, lParam);
         }
 
         private void OnLoaded(object sender, RoutedEventArgs e)
@@ -272,7 +298,7 @@ namespace ClaudeCodeVS.ToolWindow
         private void ShowInstallPanel()
         {
             _host.Stop();
-            _host.Visibility = Visibility.Collapsed;
+            _host.View.Visibility = Visibility.Collapsed;
             _installPanel.Visibility = Visibility.Visible;
             SetStatus("Claude Code is not installed", null);
         }
@@ -357,7 +383,7 @@ namespace ClaudeCodeVS.ToolWindow
             ThreadHelper.ThrowIfNotOnUIThread();
 
             _installPanel.Visibility = Visibility.Collapsed;
-            _host.Visibility = Visibility.Visible;
+            _host.View.Visibility = Visibility.Visible;
             HideNotice();
 
             ConsoleAppearance appearance = GetConsoleAppearance();
@@ -375,7 +401,14 @@ namespace ClaudeCodeVS.ToolWindow
                     if (_host.IsRunning)
                     {
                         string name = Path.GetFileName(directory.TrimEnd('\\'));
-                        SetStatus(string.IsNullOrEmpty(name) ? directory : name, directory);
+                        string details = directory;
+                        if (TerminalFactory.FallbackReason != null)
+                        {
+                            details += "\nClassic console in use. The modern terminal could not start: " +
+                                       TerminalFactory.FallbackReason;
+                        }
+
+                        SetStatus(string.IsNullOrEmpty(name) ? directory : name, details);
                         WorkingDirectory = directory;
 
                         // Started from this window (New chat, History): ready to type.
@@ -564,6 +597,25 @@ namespace ClaudeCodeVS.ToolWindow
                 _renamePopup.IsOpen = false;
                 _renamePopup = null;
             }
+        }
+
+        private void OnBusyTimerTick(object sender, EventArgs e)
+        {
+            if (_disposed)
+            {
+                return;
+            }
+
+            bool running = _host.IsRunning;
+            _stop.IsEnabled = running;
+            _stop.Opacity = running && _host.IsBusy ? 1.0 : 0.45;
+        }
+
+        private void OnStopClick(object sender, RoutedEventArgs e)
+        {
+            // Esc is how Claude Code is interrupted.
+            _host.SendText(((char)27).ToString());
+            _host.FocusSoon();
         }
 
         private void OnNewWindowClick(object sender, RoutedEventArgs e)
@@ -1126,6 +1178,7 @@ namespace ClaudeCodeVS.ToolWindow
             }
 
             _disposed = true;
+            _busyTimer.Stop();
             Microsoft.VisualStudio.Shell.Events.SolutionEvents.OnAfterOpenSolution -= OnSolutionOpened;
             CloseHistory();
             CloseRename();
